@@ -44,18 +44,24 @@ export const useDocumentLoader = (): {
         method: prefetchMethod || uri.startsWith("blob:") ? "GET" : "HEAD",
         signal,
         headers: state?.requestHeaders,
-      }).then((response) => {
-        const contentTypeRaw = response.headers.get("content-type");
-        const contentTypes = contentTypeRaw?.split(";") || [];
-        const contentType = contentTypes.length ? contentTypes[0] : undefined;
+      })
+        .then((response) => {
+          const contentTypeRaw = response.headers.get("content-type");
+          const contentTypes = contentTypeRaw?.split(";") || [];
+          const contentType = contentTypes.length ? contentTypes[0] : undefined;
 
-        dispatch(
-          updateCurrentDocument({
-            ...currentDocument,
-            fileType: contentType || undefined,
-          })
-        );
-      });
+          dispatch(
+            updateCurrentDocument({
+              ...currentDocument,
+              fileType: contentType || undefined,
+            }),
+          );
+        })
+        .catch((error) => {
+          if (error?.name !== "AbortError") {
+            throw error;
+          }
+        });
 
       return () => {
         controller.abort();
@@ -77,7 +83,7 @@ export const useDocumentLoader = (): {
         return;
       }
 
-      let updatedDocument = { ...currentDocument };
+      const updatedDocument = { ...currentDocument };
       if (fileReader.result !== null) {
         updatedDocument.fileData = fileReader.result;
       }

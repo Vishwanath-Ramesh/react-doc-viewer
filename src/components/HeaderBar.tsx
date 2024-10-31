@@ -1,4 +1,6 @@
-import React, { FC, useContext } from "react";
+"use client";
+
+import { FC, useContext } from "react";
 import styled from "styled-components";
 import { DocViewerContext } from "../store/DocViewerProvider";
 import { nextDocument, previousDocument } from "../store/actions";
@@ -6,7 +8,7 @@ import { IStyledProps } from "../models";
 import { DocumentNav } from "./DocumentNav";
 import { FileName } from "./FileName";
 
-export const HeaderBar: FC<{}> = () => {
+export const HeaderBar: FC = () => {
   const { state, dispatch } = useContext(DocViewerContext);
   const { config } = state;
 
@@ -15,7 +17,7 @@ export const HeaderBar: FC<{}> = () => {
   const override = config?.header?.overrideComponent?.(
     state,
     () => dispatch(previousDocument()),
-    () => dispatch(nextDocument())
+    () => dispatch(nextDocument()),
   );
 
   if (override) {

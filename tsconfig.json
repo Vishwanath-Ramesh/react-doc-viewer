@@ -1,22 +1,13 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/esm",
-    "target": "ES5",
-    "module": "ESNext",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "declaration": true,
-    "allowJs": true,
-    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "Node",
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "noEmit": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react",
-    "noEmit": true
+    "types": ["vitest/globals"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/exampleFiles/*", "src/setupTests.ts"]
+  "exclude": ["node_modules", "use-cases"]
 }

@@ -1,10 +1,12 @@
-import React, { FC, useContext } from "react";
+"use client";
+
+import { FC, useContext } from "react";
 import styled from "styled-components";
 import { DocViewerContext } from "../store/DocViewerProvider";
 import { IStyledProps } from "..";
 import { getFileName } from "../utils/getFileName";
 
-export const FileName: FC<{}> = () => {
+export const FileName: FC = () => {
   const {
     state: { config, currentDocument },
   } = useContext(DocViewerContext);
@@ -13,7 +15,7 @@ export const FileName: FC<{}> = () => {
 
   const fileName = getFileName(
     currentDocument,
-    config?.header?.retainURLParams || false
+    config?.header?.retainURLParams || false,
   );
 
   return (

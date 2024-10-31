@@ -1,8 +1,8 @@
-import React from "react";
+"use client";
 
 export interface IIconProps {
   color?: string;
-  size?: string | number | (string & {}) | undefined;
+  size?: string | number | string | undefined;
   reverse?: boolean;
 }
 

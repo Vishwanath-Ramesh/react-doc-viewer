@@ -1,5 +1,4 @@
 import { FC, ReactElement, ComponentType, PropsWithChildren } from "react";
-import { ThemedStyledProps } from "styled-components";
 import { IMainState } from "./store/mainStateReducer";
 import { FileLoaderFunction } from "./utils/fileLoaders";
 
@@ -9,6 +8,7 @@ export interface IConfig {
   noRenderer?: INoRendererConfig;
   csvDelimiter?: string;
   pdfZoom?: IPdfZoomConfig;
+  pdfVerticalScrollByDefault?: boolean;
 }
 
 export interface ILoadingRendererConfig {
@@ -41,7 +41,8 @@ export interface IPdfZoomConfig {
 export type IHeaderOverride = (
   state: IMainState,
   previousDocument: () => void,
-  nextDocument: () => void
+  nextDocument: () => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => ReactElement<any, any> | null;
 
 export interface ITheme {
@@ -54,7 +55,7 @@ export interface ITheme {
   disableThemeScrollbar?: boolean;
 }
 
-export interface IStyledProps extends ThemedStyledProps<any, any> {
+export interface IStyledProps {
   theme: ITheme;
 }
 
@@ -78,4 +79,9 @@ export interface DocRenderer extends FC<PropsWithChildren<DocRendererProps>> {
   fileTypes: string[];
   weight: number;
   fileLoader?: FileLoaderFunction | null | undefined;
+}
+
+export interface DocViewerRef {
+  prev: () => void;
+  next: () => void;
 }
