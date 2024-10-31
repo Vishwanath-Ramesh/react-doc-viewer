@@ -1,14 +1,23 @@
 import React, {
   createContext,
   Dispatch,
-  FC,
   useEffect,
   useReducer,
   PropsWithChildren,
+  useImperativeHandle,
+  forwardRef,
 } from "react";
-import { DocViewerProps } from "../";
-import { defaultLanguage, locales } from "../utils/i18n";
-import { MainStateActions, setAllDocuments, setMainConfig } from "./actions";
+import { DocViewerRef } from "..";
+import { DocViewerProps } from "../DocViewer";
+import { defaultLanguage, locales } from "../i18n";
+import {
+  MainStateActions,
+  nextDocument,
+  previousDocument,
+  setAllDocuments,
+  setMainConfig,
+  updateCurrentDocument,
+} from "./actions";
 import {
   IMainState,
   initialState,
@@ -21,7 +30,10 @@ const DocViewerContext = createContext<{
   dispatch: Dispatch<MainStateActions>;
 }>({ state: initialState, dispatch: () => null });
 
-const DocViewerProvider: FC<PropsWithChildren<DocViewerProps>> = (props) => {
+const DocViewerProvider = forwardRef<
+  DocViewerRef,
+  PropsWithChildren<DocViewerProps>
+>((props, ref) => {
   const {
     children,
     documents,
@@ -31,6 +43,8 @@ const DocViewerProvider: FC<PropsWithChildren<DocViewerProps>> = (props) => {
     requestHeaders,
     initialActiveDocument,
     language,
+    activeDocument,
+    onDocumentChange,
   } = props;
 
   const [state, dispatch] = useReducer<MainStateReducer>(mainStateReducer, {
@@ -50,6 +64,8 @@ const DocViewerProvider: FC<PropsWithChildren<DocViewerProps>> = (props) => {
       ? documents.findIndex((doc) => doc === initialActiveDocument) ?? 0
       : 0,
     language: language && locales[language] ? language : defaultLanguage,
+    activeDocument,
+    onDocumentChange,
   });
 
   useEffect(() => {
@@ -57,11 +73,30 @@ const DocViewerProvider: FC<PropsWithChildren<DocViewerProps>> = (props) => {
     config && dispatch(setMainConfig(config));
   }, [documents, config, initialActiveDocument]);
 
+  useEffect(() => {
+    if (activeDocument) {
+      dispatch(updateCurrentDocument(activeDocument));
+    }
+  }, [activeDocument]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      prev() {
+        dispatch(previousDocument());
+      },
+      next() {
+        dispatch(nextDocument());
+      },
+    }),
+    [dispatch],
+  );
+
   return (
     <DocViewerContext.Provider value={{ state, dispatch }}>
       {children}
     </DocViewerContext.Provider>
   );
-};
+});
 
 export { DocViewerContext, DocViewerProvider };

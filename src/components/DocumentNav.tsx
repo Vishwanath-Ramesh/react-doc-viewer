@@ -1,4 +1,6 @@
-import React, { FC, useContext } from "react";
+"use client";
+
+import { FC, useContext } from "react";
 import styled from "styled-components";
 import { DocViewerContext } from "../store/DocViewerProvider";
 import { nextDocument, previousDocument } from "../store/actions";
@@ -15,6 +17,12 @@ export const DocumentNav: FC<{}> = (): JSX.Element => {
   const { t } = useTranslation();
 
   if (documents.length <= 1 || !currentDocument) return <></>;
+
+  let fileName = currentDocument.fileSource.uri || "";
+  const splitURL = fileName?.split("/");
+  if (splitURL.length) {
+    fileName = splitURL[splitURL.length - 1];
+  }
 
   return (
     <Container id="doc-nav">

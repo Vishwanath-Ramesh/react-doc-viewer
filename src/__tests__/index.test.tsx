@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import DocViewer from "../index";
 
-import pdfFile from "../exampleFiles/pdf-file.pdf";
-import pngFile from "../exampleFiles/png-image.png";
+import csvFile from "../exampleFiles/csv-file.csv?url";
+import pdfFile from "../exampleFiles/pdf-file.pdf?url";
+import gifFile from "../exampleFiles/gif-image.gif?url";
+import pngFile from "../exampleFiles/png-image.png?url";
 
 test("renders component with no documents", () => {
   render(<DocViewer documents={[]} />);
@@ -15,11 +16,27 @@ test("renders component with documents using uri", () => {
   const docs = [
     { fileSource: { uri: pdfFile } },
     { fileSource: { uri: pngFile } },
+    { fileSource: { uri: csvFile } },
+    { fileSource: { uri: gifFile } },
   ];
+
   render(<DocViewer documents={docs} />);
 
   expect(screen.getByTestId("react-doc-viewer")).toBeDefined();
   expect(screen.getByText(`Document 1 of ${docs.length}`)).toBeDefined();
+});
+
+test("renders component with unsupported file type", () => {
+  const docs = [
+    { fileSource: { uri: "", fileType: "application/postscript" } },
+  ];
+  render(<DocViewer documents={docs} />);
+
+  expect(screen.getByTestId("react-doc-viewer")).toBeDefined();
+
+  expect(
+    screen.getByText("No renderer for file type: application/postscript"),
+  ).toBeInTheDocument();
 });
 
 test("renders doc viewer with initialActiveDocument prop", () => {

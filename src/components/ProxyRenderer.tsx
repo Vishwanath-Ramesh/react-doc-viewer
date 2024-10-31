@@ -1,7 +1,9 @@
-import React, { FC, useCallback } from "react";
+"use client";
+
+import { FC, useCallback } from "react";
 import styled, { keyframes } from "styled-components";
 import { setRendererRect } from "../store/actions";
-import { IStyledProps } from "../models";
+import { DocRenderer, IConfig, IDocument, IStyledProps } from "../models";
 import { getFileName } from "../utils/getFileName";
 import { useDocumentLoader } from "../hooks/useDocumentLoader";
 import { useWindowSize } from "../hooks/useWindowSize";
@@ -9,8 +11,93 @@ import { LinkButton } from "./common";
 import { LoadingIcon } from "./icons";
 import { LoadingTimeout } from "./LoadingTimout";
 import { useTranslation } from "../hooks/useTranslation";
+import { IMainState } from "../store/mainStateReducer";
 
-export const ProxyRenderer: FC<{}> = () => {
+type ContentsProps = {
+  documents: IDocument[];
+  documentLoading: boolean | undefined;
+  config: IConfig | undefined;
+  currentDocument: IDocument | undefined;
+  fileName: string;
+  CurrentRenderer: DocRenderer | null | undefined;
+  state: IMainState;
+  t: (
+    key:
+      | "noRendererMessage"
+      | "documentNavInfo"
+      | "downloadButtonLabel"
+      | "brokenFile"
+      | "msgPluginRecipients"
+      | "msgPluginSender"
+      | "pdfPluginLoading"
+      | "pdfPluginPageNumber",
+    variables?: Record<string, string | number>,
+  ) => string;
+};
+
+const Contents: React.FC<ContentsProps> = ({
+  documents,
+  documentLoading,
+  config,
+  currentDocument,
+  fileName,
+  CurrentRenderer,
+  state,
+  t,
+}) => {
+  if (!documents.length) {
+    return <div id="no-documents"></div>;
+  } else if (documentLoading) {
+    if (config && config?.loadingRenderer?.overrideComponent) {
+      const OverrideComponent = config.loadingRenderer.overrideComponent;
+      return (
+        <LoadingTimeout>
+          <OverrideComponent document={currentDocument} fileName={fileName} />
+        </LoadingTimeout>
+      );
+    }
+
+    return (
+      <LoadingTimeout>
+        <LoadingContainer id="loading-renderer" data-testid="loading-renderer">
+          <LoadingIconContainer>
+            <LoadingIcon color="#444" size={40} />
+          </LoadingIconContainer>
+        </LoadingContainer>
+      </LoadingTimeout>
+    );
+  } else {
+    if (CurrentRenderer) {
+      return <CurrentRenderer mainState={state} />;
+    } else if (CurrentRenderer === undefined) {
+      return null;
+    } else {
+      if (config && config?.noRenderer?.overrideComponent) {
+        const OverrideComponent = config.noRenderer.overrideComponent;
+        return (
+          <OverrideComponent document={currentDocument} fileName={fileName} />
+        );
+      }
+
+      return (
+        <div id="no-renderer" data-testid="no-renderer">
+          {t("noRendererMessage", {
+            fileType: currentDocument?.fileType ?? "",
+          })}
+          <DownloadButton
+            id="no-renderer-download"
+            href={currentDocument?.fileSource?.uri}
+            download={currentDocument?.fileSource?.uri}
+          >
+            {t("downloadButtonLabel")}
+          </DownloadButton>
+        </div>
+      );
+    }
+  }
+};
+
+export const ProxyRenderer: FC = () => {
   const { state, dispatch, CurrentRenderer } = useDocumentLoader();
   const { documents, documentLoading, currentDocument, config } = state;
   const size = useWindowSize();
@@ -21,86 +108,31 @@ export const ProxyRenderer: FC<{}> = () => {
       node && dispatch(setRendererRect(node?.getBoundingClientRect()));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [size]
+    [size, dispatch],
   );
 
   const fileName = getFileName(
     currentDocument,
-    config?.header?.retainURLParams || false
+    config?.header?.retainURLParams || false,
   );
-
-  const Contents = () => {
-    if (!documents.length) {
-      return <div id="no-documents"></div>;
-    } else if (documentLoading) {
-      if (config && config?.loadingRenderer?.overrideComponent) {
-        const OverrideComponent = config.loadingRenderer.overrideComponent;
-        return (
-          <LoadingTimeout>
-            <OverrideComponent document={currentDocument} fileName={fileName} />
-          </LoadingTimeout>
-        );
-      }
-
-      return (
-        <LoadingTimeout>
-          <LoadingContainer
-            id="loading-renderer"
-            data-testid="loading-renderer"
-          >
-            <LoadingIconContainer>
-              <LoadingIcon color="#444" size={40} />
-            </LoadingIconContainer>
-          </LoadingContainer>
-        </LoadingTimeout>
-      );
-    } else {
-      if (CurrentRenderer) {
-        return <CurrentRenderer mainState={state} />;
-      } else if (CurrentRenderer === undefined) {
-        return null;
-      } else {
-        if (config && config?.noRenderer?.overrideComponent) {
-          const OverrideComponent = config.noRenderer.overrideComponent;
-          return (
-            <OverrideComponent document={currentDocument} fileName={fileName} />
-          );
-        }
-
-        return (
-          <div id="no-renderer" data-testid="no-renderer">
-            {t("noRendererMessage", {
-              fileType: currentDocument?.fileType ?? "",
-            })}
-            <DownloadButton
-              id="no-renderer-download"
-              href={currentDocument?.fileSource?.uri}
-              download={currentDocument?.fileSource?.uri}
-            >
-              {t("downloadButtonLabel")}
-            </DownloadButton>
-          </div>
-        );
-      }
-    }
-  };
 
   return (
-    <Container
-      id="proxy-renderer"
-      data-testid="proxy-renderer"
-      ref={containerRef}
-    >
-      <Contents />
-    </Container>
+    <div id="proxy-renderer" data-testid="proxy-renderer" ref={containerRef}>
+      <Contents
+        {...{
+          state,
+          documents,
+          documentLoading,
+          config,
+          currentDocument,
+          fileName,
+          CurrentRenderer,
+          t,
+        }}
+      />
+    </div>
   );
 };
-
-const Container = styled.div`
-  display: flex;
-  flex: 1;
-  overflow-y: auto;
-`;
 
 const LoadingContainer = styled.div`
   display: flex;

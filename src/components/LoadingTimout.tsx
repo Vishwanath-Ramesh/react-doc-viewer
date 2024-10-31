@@ -1,17 +1,13 @@
-import React, {
-  FC,
-  PropsWithChildren,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+"use client";
+
+import { FC, PropsWithChildren, useContext, useEffect, useState } from "react";
 import { DocViewerContext } from "../store/DocViewerProvider";
 
 export const LoadingTimeout: FC<PropsWithChildren> = ({ children }) => {
   const { state } = useContext(DocViewerContext);
   const { config } = state;
   const [shouldLoadingRender, setShouldLoadingRender] = useState(
-    config?.loadingRenderer?.showLoadingTimeout === false
+    config?.loadingRenderer?.showLoadingTimeout === false,
   );
 
   useEffect(() => {
@@ -21,7 +17,7 @@ export const LoadingTimeout: FC<PropsWithChildren> = ({ children }) => {
       },
       typeof config?.loadingRenderer?.showLoadingTimeout === "number"
         ? config.loadingRenderer.showLoadingTimeout
-        : 500
+        : 500,
     );
   }, [config?.loadingRenderer?.showLoadingTimeout]);
 

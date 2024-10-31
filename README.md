@@ -3,31 +3,72 @@
 
 # @vichur/react-doc-viewer
 
-File viewer for React.
+File viewer for **React v17+**.
 
 > This is a fork of https://github.com/cyntler/react-doc-viewer
 
+## Important note!
+
+> [!WARNING]
+> This library uses the official MS Office online document viewing service. This means it works on an iframe basis and only supports public file URLs! Therefore, it may not be compatible with all projects. Currently, there is no way to natively render MS Office documents in the browser.
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Supported file types](#supported-file-types)
+- [Storybook Demo](#storybook-demo)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Required styles](#required-styles)
+  - [Basic](#basic)
+  - [Initial Active Document](#initial-active-document)
+  - [Control over the displayed document](#control-over-the-displayed-document)
+  - [Displaying blob/uploaded documents](#displaying-blobuploaded-documents)
+  - [Included Renderers](#included-renderers)
+  - [Custom Renderer](#custom-renderer)
+  - [Custom File Loader](#custom-file-loader)
+- [Theme](#theme)
+- [Custom pre-fetch HTTP Verb](#custom-pre-fetch-http-verb)
+- [Custom Request Headers](#custom-request-headers)
+- [Internationalization (i18n)](#internationalization-i18n)
+- [Styling](#styling)
+  - [CSS Class](#css-class)
+  - [CSS Class Default Override](#css-class-default-override)
+  - [React Inline](#react-inline)
+  - [Styled Components](#styled-components)
+- [Using DocViewerRef](#using-docviewerref)
+- [Config](#config)
+  - [Overriding Header Component](#overriding-header-component)
+  - [Overriding Loading Renderer](#overriding-loading-renderer)
+  - [Overriding No Renderer (Error)](#overriding-no-renderer-error)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Supported file types
 
-| Extension | MIME Type                                                                          |
-| --------- | ---------------------------------------------------------------------------------- |
-| bmp       | image/bmp                                                                          |
-| csv       | text/csv                                                                           |
-| doc       | application/msword                                                                 |
-| docx      | application/vnd.openxmlformats-officedocument.wordprocessingml.document            |
-| gif       | image/gif                                                                          |
-| htm       | text/htm                                                                           |
-| html      | text/html                                                                          |
-| jpg       | image/jpg                                                                          |
-| jpeg      | image/jpeg                                                                         |
-| pdf       | application/pdf                                                                    |
-| png       | image/png                                                                          |
-| ppt       | application/vnd.ms-powerpoint                                                      |
-| pptx      | applicatiapplication/vnd.openxmlformats-officedocument.presentationml.presentation |
-| tiff      | image/tiff                                                                         |
-| txt       | text/plain                                                                         |
-| xls       | application/vnd.ms-excel                                                           |
-| xlsx      | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet                  |
+| Extension | MIME Type                                                                 | Comments |
+| --------- | ------------------------------------------------------------------------- | ------------- |
+| bmp       | image/bmp                                                                 | |
+| csv       | text/csv                                                                  | |
+| odt       | application/vnd.oasis.opendocument.text                                   | |
+| doc       | application/msword                                                        | Public URLs only! |
+| docx      | application/vnd.openxmlformats-officedocument.wordprocessingml.document   | Public URLs only! |
+| gif       | image/gif                                                                 | |
+| htm       | text/htm                                                                  | |
+| html      | text/html                                                                 | |
+| jpg       | image/jpg                                                                 | |
+| jpeg      | image/jpeg                                                                | |
+| pdf       | application/pdf                                                           | |
+| png       | image/png                                                                 | |
+| ppt       | application/vnd.ms-powerpoint                                             | Public URLs only! |
+| pptx      | application/vnd.openxmlformats-officedocument.presentationml.presentation | Public URLs only! |
+| tiff      | image/tiff                                                                | |
+| txt       | text/plain                                                                | |
+| xls       | application/vnd.ms-excel                                                  | Public URLs only! |
+| xlsx      | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet         | Public URLs only! |
+| mp4       | video/mp4                                                                 | |
+| webp      | image/webp                                                                | |
 
 ## Storybook Demo
 
@@ -47,6 +88,14 @@ Use one of the package managers for Node.js.
 
 > **Warning:** _By default the component height will expand and contract to the current loaded file. The width will expand to fill the parent._
 
+### Required styles
+
+The library exports a CSS file containing classes needed for correct rendering of e.g. PDF files. It is best to include it at the beginning of the application or in the place where you use this library.
+
+```tsx
+import "@cyntler/react-doc-viewer/dist/index.css";
+```
+
 ### Basic
 
 DocViewer requires at least an array of document objects to function.
@@ -54,6 +103,7 @@ Each document object must have a uri to a file, either a url that returns a file
 
 ```tsx
 import DocViewer, { DocViewerRenderers } from "@vichur/react-doc-viewer";
+import "@vichur/react-doc-viewer/dist/index.css";
 
 function App() {
   const docs = [
@@ -71,8 +121,9 @@ By default, the first item in your `documents` array will be displayed after the
 
 ```tsx
 import DocViewer, { DocViewerRenderers } from "@vichur/react-doc-viewer";
+import "@vichur/react-doc-viewer/dist/index.css";
 
-function App() {
+const App = () => {
   const docs = [
     { fileSource: { uri: "https://url-to-my-pdf.pdf" } }, // Remote file
     { fileSource: { uri: require("./example-files/pdf.pdf") } }, // Local File
@@ -85,12 +136,40 @@ function App() {
       pluginRenderers={DocViewerRenderers}
     />
   );
-}
+};
+```
+
+### Control over the displayed document
+
+From version **1.11.0** you can control the displayed document through two props: `activeDocument` and `onDocumentChange`.
+
+```jsx
+const DocViewerControlOverDisplayedDocument = () => {
+  const docs = [
+    { uri: "https://url-to-my-pdf.pdf" }, // Remote file
+    { uri: require("./example-files/pdf.pdf") }, // Local File
+  ];
+  const [activeDocument, setActiveDocument] = useState(docs[0]);
+
+  const handleDocumentChange = (document) => {
+    setActiveDocument(document);
+  };
+
+  return (
+    <>
+      <DocViewer
+        documents={docs}
+        activeDocument={activeDocument}
+        onDocumentChange={handleDocumentChange}
+      />
+    </>
+  );
+};
 ```
 
 ### Displaying blob/uploaded documents
 
-Since **1.6.2** you can use documents in the form of blobs, which allows you to e.g. display uploaded files.
+Since **v1.6.2** you can use documents in the form of blobs, which allows you to e.g. display uploaded files.
 
 ```jsx
 const DocViewerWithInputApp = () => {
@@ -128,6 +207,7 @@ To use the included renderers.
 
 ```tsx
 import DocViewer, { DocViewerRenderers } from "@vichur/react-doc-viewer";
+import "@vichur/react-doc-viewer/dist/index.css";
 
 <DocViewer
   pluginRenderers={DocViewerRenderers}
@@ -139,6 +219,7 @@ Or you can import individual renderers.
 
 ```tsx
 import DocViewer, { PDFRenderer, PNGRenderer } from "@vichur/react-doc-viewer";
+import "@vichur/react-doc-viewer/dist/index.css";
 
 <DocViewer
   pluginRenderers={[PDFRenderer, PNGRenderer]}
@@ -174,6 +255,7 @@ And supply it to `pluginRenderers` inside an `Array`.
 
 ```tsx
 import DocViewer, { DocViewerRenderers } from "@vichur/react-doc-viewer";
+import "@vichur/react-doc-viewer/dist/index.css";
 
 <DocViewer
   pluginRenderers={[MyCustomPNGRenderer]}
@@ -261,13 +343,13 @@ The translations are based on the `.json` files that can be found in the `src/lo
 
 Any styling applied to the `<DocViewer>` component, is directly applied to the main `div` container.
 
-#### CSS Class
+### CSS Class
 
 ```xml
 <DocViewer documents={docs} className="my-doc-viewer-style" />
 ```
 
-#### CSS Class Default Override
+### CSS Class Default Override
 
 Each component / div already has a DOM id that can be used to style any part of the document viewer.
 
@@ -277,13 +359,13 @@ Each component / div already has a DOM id that can be used to style any part of 
 }
 ```
 
-#### React Inline
+### React Inline
 
 ```xml
 <DocViewer documents={docs} style={{ width: 500, height: 500 }} />
 ```
 
-#### Styled Components
+### Styled Components
 
 ```tsx
 import styled from "styled-components";
@@ -297,6 +379,36 @@ import styled from "styled-components";
 const MyDocViewer = styled(DocViewer)`
   border-radius: 10px;
 `;
+```
+
+## Using DocViewerRef
+
+Since **v1.13.0** you can control the display of the document with `reference`.
+
+```tsx
+import DocViewer, { DocViewerRef } from "@cyntler/react-doc-viewer";
+
+export const UsingRef = () => {
+  const docViewerRef = useRef<DocViewerRef>(null);
+
+  return (
+    <>
+      <div>
+        <button onClick={() => docViewerRef?.current?.prev()}>
+          Prev Document By Ref
+        </button>
+        <button onClick={() => docViewerRef?.current?.next()}>
+          Next Document By Ref
+        </button>
+      </div>
+      <DocViewer
+        ref={docViewerRef}
+        documents={docs}
+        config={{ header: { disableHeader: true } }}
+      />
+    </>
+  );
+};
 ```
 
 ## Config
@@ -317,6 +429,7 @@ You can provide a config object, which configures parts of the component as requ
       defaultZoom: 1.1, // 1 as default,
       zoomJump: 0.2, // 0.1 as default,
     },
+    pdfVerticalScrollByDefault: true, // false as default
   }}
 />
 ```
